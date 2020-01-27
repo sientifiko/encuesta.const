@@ -1,0 +1,72 @@
+
+Este texto describe brevemente las variables, del archivo "2017-enero-final.csv"
+Sus modificaciones, como aquellas variables centradas son descritas en los comentarios del script
+
+================================ SECCION 1 =========================================
+ESCALA LIKERT
+INDIQUE SU GRADO DE ACUERDO CON LOS SIGUIENTES ENUNCIADOS
+NIVELES : Muy en desacuerdo, En desacuerdo, Neutral, De acuerdo a Muy de acuerdo
+
+esperanza ("Me siento muy esperanzado por el cambio de la constitución")
+necesario ("Creo que el cambio constitucional es necesario para avanzar en materia de derechos y justicia social")
+eval.acuerdo ("Creo que el acuerdo para el cambio constitucional fue justo y transparente")
+mejor.pais ("Confío en que una nueva constitución nos hará un mejor país a la larga")
+
+
+=============================== SECCION 2 ============================================
+
+SELECCIÓN MÚLTIPLE
+VOTACIÓN EN PLEBSICITO DE ABRIL 2020
+
+nueva.const ("ANTE LA PREGUNTA "¿QUIERE USTED UNA NUEVA CONSTITUCIÓN?" USTED...")
+-NIVELES : Aprueba ("VOTARÁ "APRUEBO""), Rechaza ("VOTARÁ "RECHAZO""), 
+           Nulo o Blanco ("VOTARÁ "NULO O BLANCO""), No votara ("NO IRÁ A VOTAR")
+
+mecanismo ("ANTE LA PREGUNTA "¿QUÉ TIPO DE ÓRGANO DEBIERA REDACTAR LA NUEVA CONSTITUCIÓN?" USTED...")
+-NIVELES: CM ("VOTARÁ "CONVENCIÓN MIXTA" (50% elección popular, 50% congreso)"), CC ("VOTARÁ "CONVENCIÓN CONSTITUCIONAL" (100% electa)"), 
+          Nulo o Blanco ("VOTARÁ "NULO O BLANCO""), No votara ("NO IRÁ A VOTAR")
+
+
+============================== SECCION 3 ====================================
+
+VARIABLES SOCIOPOLÍTICAS, AUTOPOSICIONAMIENTO IDEOLÓGICO
+
+org.pol ("LA MEJOR FORMA DE ORGANIZACIÓN POLÍTICA ES CON UNA ORGÁNICA DE TIPO")
+-Escala de 10 puntos con anclas en cada extremo, Totalmente horizontal = 1, Totalmente jerarquica = 10
+
+org.econ ("LA MEJOR FORMA DE ORGANIZACIÓN ECONÓMICA ES CON UN MERCADO")
+-Escala de 10 puntos con anclas en cada extremo, Libre de toda regulación y restricción = 1, 
+ Totalmente regulado y planificado = 10
+
+realidad ("RESPECTO A "LA REALIDAD" COMO TAL, PODEMOS DECIR QUE")
+-Escala de 10 puntos con anclas en cada extremo, Es totalmente una construcción social = 1, 
+ Es totalmente independiente de los sujetos que la perciben = 10
+
+pos.politico ("SI TUVIERA QUE AUTOPOSICIONARSE IDEOLÓGICAMENTE DIRÍA QUE USTED ES DE")
+-Escala de 10 puntos con anclas en cada extremo, Extrema izquierda = 1, Extrema derecha = 10
+
+=========================== VARIABLES INDIVIDUALES ====================
+
+edad (pregunta abierta)
+
+genero (seleccion múltiple)
+
+region (seleccion múltiple)
+
+comuna (pregunta abierta)
+
+esc (pregunta abierta)
+-"¿CUANTOS AÑOS DE EDUCACIÓN FORMAL ACUMULA HASTA ÉSTE MOMENTO? (sumando educación básica, media, técnica, universitaria, y postgrados)."
+-Incluye siguiente texto de ayuda: "Considere que 12 años son educación básica y media completa"
+
+nse ("SI TUVIERAS QUE POSICIONAR TU NIVEL SOCIOECONÓMICO DIRÍAS QUE ES...")
+-Escala de 5 puntos, con anclas en cada extremo Muy bajo = 1, Muy alto = 5
+
+
+
+
+
+
+
+
+
