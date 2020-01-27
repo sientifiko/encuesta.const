@@ -4,7 +4,7 @@ encuesta <- read.delim("enero-2017.csv", sep = ";")
 
 # cambiar el nombre de las columnas
 colnames(encuesta) <- c("esperanza", "necesario", "eval.acuerdo", "mejor.pais", "nueva.const",
-                        "mecanismo", "genero", "region", "comuna", "edad", "nes", "org.pol", 
+                        "mecanismo", "genero", "region", "comuna", "edad", "nse", "org.pol", 
                         "realidad", "org.econ", "pos.politico", "esc")
 
 # reorganizar las columnas en un orden más cómodo

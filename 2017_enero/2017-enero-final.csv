@@ -1,4 +1,4 @@
-"genero","region","comuna","edad","nes","esc","esperanza","necesario","eval.acuerdo","mejor.pais","org.pol","org.econ","pos.politico","realidad","nueva.const","mecanismo"
+"genero","region","comuna","edad","nse","esc","esperanza","necesario","eval.acuerdo","mejor.pais","org.pol","org.econ","pos.politico","realidad","nueva.const","mecanismo"
 "Hombre","RM","Colina",20,2,14,"Muy de acuerdo","Muy de acuerdo","De acuerdo","Muy de acuerdo",5,7,5,4,"Aprueba","CC"
 "Hombre","RM","Santiago ",34,5,19,"De acuerdo","Muy de acuerdo","Muy en desacuerdo","Muy de acuerdo",4,10,3,7,"Aprueba","CC"
 "Mujer","Maule","Cauquenes ",18,3,12,"Muy de acuerdo","Muy de acuerdo","Muy en desacuerdo","Muy de acuerdo",5,10,1,9,"Aprueba","CC"
