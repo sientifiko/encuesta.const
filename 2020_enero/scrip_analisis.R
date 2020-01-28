@@ -1,6 +1,7 @@
 
 # iniciar librerías
-library(tidyverse); library(officer); library(bbplot)
+library(tidyverse); library(officer); 
+library(bbplot); library(flextable); library(gridExtra)
 
 
 # ============================ NORMALIZAR LA DATA ========================
@@ -21,7 +22,7 @@ for(i in 7:10){
 }
 
 # generar un nse como factor
-encuesta$nse.factor <- factor(encuesta$nse, 
+encuesta$nse.factor <- factor(as.factor(encuesta$nse), 
                               labels = c("Muy bajo", "Bajo", "Medio", "Alto", "Muy alto"))
 
 
@@ -77,6 +78,42 @@ nse_plot <- ggplot(nse, aes(nse.factor, perc, fill = nse.factor)) +
   labs(title = "Porcentaje por NSE",
        subtitle = paste("N:", sum(nse$n)))
 
+
+# por EDAD 
+ggplot(encuesta, aes(edad)) +
+  bbc_style() +
+  geom_density() +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 2)) +
+  labs(title = "Edad")
+
+# se descubren outliers en EDAD, que procedemos a eliminar
+max(encuesta$edad, na.rm = T)
+encuesta$edad[encuesta$edad == 2920] <- NA
+encuesta$edad[encuesta$edad == 2722] <- NA
+
+min(encuesta$edad, na.rm = T)
+encuesta$edad[encuesta$edad == -1] <- NA
+encuesta$edad[encuesta$edad == 0] <- NA
+
+edad <- ggplot(encuesta, aes(edad)) +
+  bbc_style() +
+  geom_density() +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 2)) +
+  geom_text(aes(label = paste("media:",round(mean(edad, na.rm = T),1), "\n",
+                              "d.estandar:", round(sd(edad, na.rm = T),1)), 
+                x = 60, y = .06)) +
+  labs(title = "Edad")
+
+# por ESCOLARIDAD
+escolaridad <- ggplot(encuesta, aes(esc)) +
+  bbc_style() +
+  geom_density() +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 2)) +
+  geom_text(aes(label = paste("media:",round(mean(edad, na.rm = T),1), "\n",
+                              "d.estandar:", round(sd(edad, na.rm = T),1)), 
+                x = 25, y = .15)) +
+  labs(title = "Escolaridad")
+
 # por ESCALAS LIKERT
 esc.likert <- encuesta %>% 
   select(7:10) %>%
@@ -105,17 +142,35 @@ likert <- ggplot(esc.likert, aes(valor, perc, fill = valor)) +
         axis.text.x = element_text(size = 12))
 
 
+# == por ORGANIZACIÓN POLÍTICA y ECONÓMICA
+
+
+
+
+
+
 # exportando gráficas a pptx
 read_pptx() %>%
   add_slide(layout = "Title and Content", master = "Office Theme") %>%
-  ph_with_gg(genero_plot) %>% 
+  ph_with_gg(genero_plot, location = ph_location_fullsize()) %>% 
   add_slide(layout = "Title and Content", master = "Office Theme") %>%
-  ph_with_gg(region_plot) %>% 
+  ph_with_gg(region_plot, location = ph_location_fullsize()) %>% 
   add_slide(layout = "Title and Content", master = "Office Theme") %>%
-  ph_with_gg(nse_plot) %>% 
+  ph_with_gg(nse_plot, location = ph_location_fullsize()) %>% 
   add_slide(layout = "Title and Content", master = "Office Theme") %>%
-  ph_with_gg(likert) %>% 
+  ph_with_gg(edad, location = ph_location_left()) %>% 
+  ph_with_gg(escolaridad, location = ph_location_right()) %>% 
+  add_slide(layout = "Title and Content", master = "Office Theme") %>%
+  ph_with_gg(likert, location = ph_location_fullsize()) %>% 
   print(target = "2020 enero.pptx")
+
+
+# esto es para agregar tablas si se desea
+# read_pptx() %>%
+#   add_slide("Title and Content", "Office Theme") %>%
+#   ph_with(flextable(data.frame), 
+#           location = ph_location_template(left = x, top = y)) %>%
+#   print(target = "nombre_archivo.pptx")
 
 
 
