@@ -1,6 +1,6 @@
 
 # abrir archivo en csv
-encuesta <- read.delim("enero-2017.csv", sep = ";")
+encuesta <- read.delim("enero-2020.csv", sep = ";")
 
 # cambiar el nombre de las columnas
 colnames(encuesta) <- c("esperanza", "necesario", "eval.acuerdo", "mejor.pais", "nueva.const",
@@ -22,7 +22,7 @@ levels(encuesta$nueva.const) <- c("No votara", "Aprueba", "Nulo o Blanco", "Rech
 levels(encuesta$mecanismo) <- c("No votara", "CC", "CM", "Nulo o Blanco")
 
 # exportar a csv versión final
-write.csv(encuesta, "2017-enero-final.csv", row.names = F)
+write.csv(encuesta, "2020-enero-final.csv", row.names = F)
 
 
 

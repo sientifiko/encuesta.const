@@ -6,7 +6,7 @@ library(tidyverse); library(officer); library(bbplot)
 # ============================ NORMALIZAR LA DATA ========================
 
 # importar encuesta
-encuesta <- read.csv("2017-enero-final.csv")
+encuesta <- read.csv("2020-enero-final.csv")
 
 # reordernar factores de variables
 # region (por si quieren las regiones ordenadas de norte a sur)
@@ -115,7 +115,7 @@ read_pptx() %>%
   ph_with_gg(nse_plot) %>% 
   add_slide(layout = "Title and Content", master = "Office Theme") %>%
   ph_with_gg(likert) %>% 
-  print(target = "2017 enero.pptx")
+  print(target = "2020 enero.pptx")
 
 
 
