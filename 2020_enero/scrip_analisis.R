@@ -1,7 +1,6 @@
 
 # iniciar librerías
-library(tidyverse); library(officer); 
-library(bbplot); library(flextable); library(gridExtra)
+library(tidyverse); library(officer);library(bbplot); library(flextable)
 
 
 # ============================ NORMALIZAR LA DATA ========================
@@ -24,6 +23,14 @@ for(i in 7:10){
 # generar un nse como factor
 encuesta$nse.factor <- factor(as.factor(encuesta$nse), 
                               labels = c("Muy bajo", "Bajo", "Medio", "Alto", "Muy alto"))
+
+# centrar en 0 variables de organización política y económica
+encuesta$org.pol.cent <- encuesta$org.pol - 5
+encuesta$org.econ.cent <- encuesta$org.econ - 5
+
+# centrar en 0 variables de ontología y posicionamiento político
+encuesta$realidad.cent <- encuesta$realidad - 5
+encuesta$pos.politico.cent <- encuesta$pos.politico - 5
 
 
 # ======================= DESCRIPCIÓN DE LA MUESTRA ==========================
@@ -114,6 +121,53 @@ escolaridad <- ggplot(encuesta, aes(esc)) +
                 x = 25, y = .15)) +
   labs(title = "Escolaridad")
 
+
+
+# == por ORGANIZACIÓN POLÍTICA y ECONÓMICA, y posición política
+org_pol_econ <- ggplot(encuesta, aes(org.pol.cent, org.econ.cent)) +
+  bbc_style() +
+  geom_jitter()+
+  geom_vline(xintercept = 0) +
+  geom_hline(yintercept = 0) +
+  scale_y_continuous(limits = c(-5, 5), breaks = seq(-5, 5, 1)) +
+  scale_x_continuous(limits = c(-5, 5), breaks = seq(-5, 5, 1)) +
+  geom_text(aes(label = "Totalmente Jerarquica", x = 5, y = 0), 
+            angle = -90, colour = "red") +
+  geom_text(aes(label = "Totalmente Horizontal", x = -5, y = 0), 
+            angle = 90, colour = "red") + # eje x
+  geom_text(aes(label = "Totalmente Regulada", x = 0, y = 5),colour = "blue") +
+  geom_text(aes(label = "Totalmente Desregulada", x = 0, y = -5), colour = "blue") + # eje y
+  theme(legend.position = "none") +
+  labs(title = "Organización política y económica", 
+       subtitle = "Azul: económica, Rojo: política")
+  
+# == por TENDENCIA POLÍTICA Y NIVEL DE REALISMO
+
+pospol_realismo <- ggplot(encuesta, aes(realidad.cent, pos.politico.cent)) +
+  bbc_style() +
+  geom_jitter()+
+  geom_vline(xintercept = 0) +
+  geom_hline(yintercept = 0) +
+  scale_y_continuous(limits = c(-5, 5), breaks = seq(-5, 5, 1)) +
+  scale_x_continuous(limits = c(-5, 5), breaks = seq(-5, 5, 1)) +
+  geom_text(aes(label = "Independiente de sujetos que la perciben", x = 5, y = 0), 
+            angle = -90, colour = "red") +
+  geom_text(aes(label = "Construcción social", x = -5, y = 0), 
+            angle = 90, colour = "red") + # eje x
+  geom_text(aes(label = "Extrema derecha", x = 0, y = 5),colour = "blue") +
+  geom_text(aes(label = "Extrema izquierda", x = 0, y = -5), colour = "blue") + # eje y
+  theme(legend.position = "none") +
+  labs(title = "Posicionamiento político y percepción ontológica", 
+       subtitle = "Azul: político, Rojo: ontológica")
+
+
+
+
+
+
+
+# ================== DESCRIPTIVO VARIABLES PRINCIPALES ============
+
 # por ESCALAS LIKERT
 esc.likert <- encuesta %>% 
   select(7:10) %>%
@@ -126,9 +180,9 @@ esc.likert$valor <- factor(as.factor(esc.likert$valor),
 
 esc.likert$likert <- as.factor(esc.likert$likert)
 levels(esc.likert$likert) <- c("Me siento muy esperanzado por el \ncambio de la constitución",
-                                          "Creo que el acuerdo para el cambio \nconstitucional fue justo y transparente",
-                                          "Confío en que una nueva constitución \nnos hará un mejor país a la larga",
-                                          "Creo que el cambio constitucional es \nnecesario para avanzar en materia de derechos y \njusticia social")
+                               "Creo que el acuerdo para el cambio \nconstitucional fue justo y transparente",
+                               "Confío en que una nueva constitución \nnos hará un mejor país a la larga",
+                               "Creo que el cambio constitucional es \nnecesario para avanzar en materia de derechos y \njusticia social")
 
 likert <- ggplot(esc.likert, aes(valor, perc, fill = valor)) +
   bbc_style() +
@@ -142,14 +196,49 @@ likert <- ggplot(esc.likert, aes(valor, perc, fill = valor)) +
         axis.text.x = element_text(size = 12))
 
 
-# == por ORGANIZACIÓN POLÍTICA y ECONÓMICA
+# por APOYO A NUEVA CONSTITUCIÓN
+apoyo <- encuesta %>%
+  group_by(nueva.const) %>%
+  summarize(n = n()) %>%
+  mutate(perc = n/sum(n))
+
+ggplot(apoyo, aes(reorder(nueva.const, -perc), perc, fill = nueva.const)) +
+  bbc_style() +
+  geom_bar(stat = "identity") +
+  scale_y_continuous(labels = scales::percent) +
+  theme(axis.text.x = element_text(angle = 45, vjust = .5),
+        legend.position = "none") +
+  geom_text(aes(label = scales::percent(perc))) +
+  labs(title = "Porcentaje por cambio de constitución",
+       subtitle = paste("N:", sum(nse$n)))
+
+# por MECANISMO
+mecanismo <- encuesta %>%
+  group_by(mecanismo) %>%
+  summarize(n = n()) %>%
+  mutate(perc = n/sum(n))
+
+ggplot(mecanismo, aes(reorder(mecanismo, -perc), perc, fill = mecanismo)) +
+  bbc_style() +
+  geom_bar(stat = "identity") +
+  scale_y_continuous(labels = scales::percent) +
+  theme(axis.text.x = element_text(angle = 45, vjust = .5),
+        legend.position = "none") +
+  geom_text(aes(label = scales::percent(perc))) +
+  labs(title = "Porcentaje por mecanismo de nueva constitución",
+       subtitle = paste("N:", sum(nse$n)))
+
+table(encuesta$nueva.const, encuesta$mecanismo)
+
+# ============================ RELACIONES ========================
 
 
 
 
 
+# ========================  EXPORTANDO TODO A PPT ==================
 
-# exportando gráficas a pptx
+
 read_pptx() %>%
   add_slide(layout = "Title and Content", master = "Office Theme") %>%
   ph_with_gg(genero_plot, location = ph_location_fullsize()) %>% 
@@ -161,6 +250,11 @@ read_pptx() %>%
   ph_with_gg(edad, location = ph_location_left()) %>% 
   ph_with_gg(escolaridad, location = ph_location_right()) %>% 
   add_slide(layout = "Title and Content", master = "Office Theme") %>%
+  ph_with_gg(org_pol_econ, location = ph_location_fullsize()) %>% 
+  add_slide(layout = "Title and Content", master = "Office Theme") %>%
+  ph_with_gg(pospol_realismo, location = ph_location_fullsize()) %>% 
+  add_slide(layout = "Title and Content", master = "Office Theme") %>%
+  # desde aquí gráficas sobre preguntas clave
   ph_with_gg(likert, location = ph_location_fullsize()) %>% 
   print(target = "2020 enero.pptx")
 
@@ -171,16 +265,4 @@ read_pptx() %>%
 #   ph_with(flextable(data.frame), 
 #           location = ph_location_template(left = x, top = y)) %>%
 #   print(target = "nombre_archivo.pptx")
-
-
-
-
-# ============================ RELACIONES ========================
-
-
-
-
-
-
-
 
