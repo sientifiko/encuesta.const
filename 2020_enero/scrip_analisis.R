@@ -1,8 +1,15 @@
 
-# iniciar librerías
+# chequear si packages están instalados
+paquetes <- c("tidyverse", "officer", "bbplot", "flextable")
+nuevos.paquetes <- paquetes[!(paquetes %in% installed.packages()[,"Package"])]
+if(length(nuevos.paquetes)>0){install.packages(nuevos.paquetes)}
+rm(paquetes, nuevos.paquetes)
+
+# iniciar packages
 library(tidyverse); library(officer);library(bbplot); library(flextable)
+options(scipen = 999)
 
-
+  
 # ============================ NORMALIZAR LA DATA ========================
 
 # importar encuesta
@@ -19,7 +26,7 @@ for(i in 7:10){
   encuesta[,i] <- factor(encuesta[,i],
                          levels(encuesta[,i])[c(4, 2, 5, 1, 3)])
 }
-
+rm(i)
 # generar un nse como factor
 encuesta$nse.factor <- factor(as.factor(encuesta$nse), 
                               labels = c("Muy bajo", "Bajo", "Medio", "Alto", "Muy alto"))
@@ -226,6 +233,11 @@ mecanismo_plot <- ggplot(mecanismo, aes(reorder(mecanismo, -perc), perc, fill = 
 table(encuesta$nueva.const, encuesta$mecanismo)
 
 # ============================ RELACIONES ========================
+paquetes <- c("MASS", "stargazer", "corrplot", "Hmisc", "ggpubr")
+nuevos.paquetes <- paquetes[!(paquetes %in% installed.packages()[,"Package"])]
+if(length(nuevos.paquetes)>0){install.packages(nuevos.paquetes)}
+rm(paquetes, nuevos.paquetes)
+
 library(MASS); library(stargazer); library(corrplot); library(Hmisc); library(ggpubr)
 
 # Usaremos una regresión ordinal para predecir niveles de desconfianza o
@@ -257,15 +269,16 @@ encuesta$esperanza.reduc <- case_when(
   encuesta$esperanza == "Muy en desacuerdo" | encuesta$esperanza == "En desacuerdo" ~ "Desconfianza"
 ) %>% factor(c("Confianza", "Neutral", "Desconfianza"))
 
-
-encuesta$esperanza.rev <- fct_rev(encuesta$esperanza)
-encuesta$eval.acuerdo.rev <- fct_rev(encuesta$eval.acuerdo)
-
-
+encuesta$eval.acuerdo.reduc <- case_when(
+  encuesta$eval.acuerdo == "Muy de acuerdo" | encuesta$eval.acuerdo == "De acuerdo" ~ "Confianza",
+  encuesta$eval.acuerdo == "Neutral" ~ "Neutral",
+  encuesta$eval.acuerdo == "Muy en desacuerdo" | encuesta$eval.acuerdo == "En desacuerdo" ~ "Desconfianza"
+) %>% factor(c("Confianza", "Neutral", "Desconfianza"))
+  
 
 # las discretizaré para sacar correlaciones
-encuesta$esperanza.rev.num <- encuesta$esperanza.rev %>% as.numeric()
-encuesta$eval.acuerdo.rev.num <- encuesta$eval.acuerdo.rev %>% as.numeric()
+encuesta$esperanza.reduc.num <- encuesta$esperanza.reduc %>% as.numeric()
+encuesta$eval.acuerdo.reduc.num <- encuesta$eval.acuerdo.reduc %>% as.numeric()
 
 # exploremos la relación en posicionamiento político, para identificar colinealidades
 # u otros
@@ -273,7 +286,7 @@ cormat_pol <- rcorr(as.matrix(encuesta[, c(5,6,11:14, 24, 25)]), type = "spearma
 
 corrplot(cormat_pol$r, type = "upper", order = "hclust", addCoef.col = "black",
          tl.col = "black", tl.srt = 45, p.mat = cormat_pol$P, sig.level = 0.5,
-         insig = "blank", diag = F, tl.cex = .7, tl.pos = "td")
+         insig = "blank", diag = F, tl.cex = .5, tl.pos = "td")
 
 
 # hay correlación en algunas variables, pero efecto es bastante pequeño, así que procedemos
@@ -287,7 +300,7 @@ encuesta$org.econ.std <- scale(encuesta$org.econ)
 encuesta$org.pol.std <- scale(encuesta$org.pol)
 
 # primer modelo, predecir "me siento muy esperanzado por cambio en constitución"
-esp.model <- polr(esperanza.rev ~ nse + esc + 
+esp.model <- polr(esperanza.reduc ~ nse + esc + 
                     realidad.std + pos.politico.std + org.econ.std + org.pol.std, 
                   data = encuesta, Hess = T)
 
@@ -298,8 +311,7 @@ p.valores_esperanza <- pnorm(abs(t.valores_esperanza), lower.tail = F) * 2
 
 cbind(tabla_coef_esperanza, "p.valor" = p.valores_esperanza)
 
-
-# mostrando resultados con stargazer con stargazer
+# mostrando resultados con stargazer 
 stargazer(esp.model, type = "text")
 
 # tabla de OR
@@ -307,30 +319,109 @@ OR.esperanza <- as.data.frame(cbind(OR = exp(coef(esp.model)),confint(esp.model)
   rownames_to_column()
 
 # flextable de OR.esperanza para exportar
-OR.esperanza.table <- flextable(OR.esperanza, cwidth = 1.5, cheight = 1) %>% 
+OR.esperanza.table <- flextable(OR.esperanza, cwidth = 1.5, cheight = .5) %>% 
   align(align = "center", part = "all") %>% bold(part = "header") %>%
   color(i = with(OR.esperanza, sign(`2.5 %`)==sign(`97.5 %`)),
         color = "green")
 
-
-ggplot(encuesta, aes(org.pol.std, org.econ.std, shape = as.factor(esperanza.rev))) +
+# plot de modelo 1
+modelo1 <- ggplot(encuesta, aes(esperanza.reduc,org.econ, colour = pos.politico)) +
   theme_bw() +
+  geom_boxplot(outlier.colour = "white")+
   geom_jitter()+
-  geom_vline(xintercept = 0) +
-  geom_hline(yintercept = 0) +
-  # scale_y_continuous(limits = c(-5, 5), breaks = seq(-5, 5, 1)) +
-  # scale_x_continuous(limits = c(-5, 5), breaks = seq(-5, 5, 1)) +
-  geom_text(aes(label = "Jerarquica", x = max(org.pol.std)+.5, y = 0), 
-            angle = -90, colour = "red") +
-  geom_text(aes(label = "Horizontal", x = min(org.pol.std)-.5, y = 0), 
-            angle = 90, colour = "red") + # eje x
-  geom_text(aes(label = "Regulada", x = 0, y = max(org.econ.std)+.5),colour = "blue") +
-  geom_text(aes(label = "Desregulada", x = 0, y = min(org.econ.std)-.5), colour = "blue") + # eje y
-  theme(legend.position = "right") +
-  labs(x = "Organización política", y = "Organización económica",
-       shape = "Me siento muy esperanzado \npor cambio en constitución")
+  scale_color_gradient(low = "red", high = "yellow") +
+  geom_text(aes(label = "Total regulación", x = 2, y = 10.5),colour = "blue") +
+  geom_text(aes(label = "Total desregulación", x = 2, y = 0.5), colour = "blue") + 
+  scale_y_continuous(breaks = seq(1,10,1)) +
+  theme(text = element_text(size = 20)) +
+  labs(x = "Esperanza por el cambio de constitución", 
+       y = "Organización económica",
+       colour = "Posicionamiento político\nderecha = 10\nizquierda = 1")
+
+# primer modelo, predecir "Creo que el acuerdo para el cambio constitucional fue justo y transparente"
+acuerdo.model <- polr(eval.acuerdo.reduc ~ nse + esc + 
+                    realidad.std + pos.politico.std + org.econ.std + org.pol.std, 
+                  data = encuesta, Hess = T)
+
+# resumen general de modelo
+tabla_coef_acuerdo <- coef(summary(acuerdo.model))
+t.valores_acuerdo <- coef(summary(acuerdo.model))[, "t value"]
+p.valores_acuerdo <- pnorm(abs(t.valores_acuerdo), lower.tail = F) * 2
+
+cbind(tabla_coef_acuerdo, "p.valor" = p.valores_acuerdo)
+
+# mostrando resultados con stargazer 
+stargazer(acuerdo.model, type = "text")
+
+# tabla de OR
+OR.acuerdo <- as.data.frame(cbind(OR = exp(coef(acuerdo.model)),
+                                  confint(acuerdo.model))) %>% 
+  rownames_to_column()
+
+# flextable de OR.esperanza para exportar
+OR.acuerdo.table <- flextable(OR.acuerdo, cwidth = 1.5, cheight = .5) %>% 
+  align(align = "center", part = "all") %>% bold(part = "header") %>%
+  color(i = with(OR.acuerdo, sign(`2.5 %`)==sign(`97.5 %`)),
+        color = "green")
+
+# plot de modelo 2
+modelo2 <- ggplot(encuesta, aes(eval.acuerdo.reduc, pos.politico)) +
+  theme_bw() +
+  geom_boxplot(outlier.colour = "white")+
+  geom_jitter()+
+  geom_text(aes(label = "Derecha", x = 2, y = 10.5),colour = "blue") +
+  geom_text(aes(label = "Izquierda", x = 2, y = 0.5), colour = "blue") + 
+  scale_y_continuous(breaks = seq(1,10,1)) +
+  theme(text = element_text(size = 20)) +
+  labs(x = "Fue acuerdo para cambio de constitución transparente y justo", 
+       y = "Posicionamiento político")
 
 
+# modelo para analizar percepción de evaluación del acuerdo y la esperanza que genera
+modelo3 <- polr(esperanza.reduc ~ nse + esc + 
+                  pos.politico.std + scale(eval.acuerdo.reduc.num), 
+     data = encuesta, Hess = T) 
+
+# resumen general de modelo
+tabla_coef <- coef(summary(modelo3))
+t.valores <- coef(summary(modelo3))[, "t value"]
+p.valores <- pnorm(abs(t.valores), lower.tail = F) * 2
+
+cbind(tabla_coef, "p.valor" = p.valores)
+
+# mostrando resultados con stargazer 
+stargazer(modelo3, type = "text")
+
+# tabla de OR
+OR.set <- as.data.frame(cbind(OR = exp(coef(modelo3)),
+                                  confint(modelo3))) %>% 
+  rownames_to_column()
+
+
+# flextable de OR.esperanza para exportar
+OR.table <- flextable(OR.set, cwidth = 1.5, cheight = .5) %>% 
+  align(align = "center", part = "all") %>% bold(part = "header") %>%
+  color(i = with(OR.set, sign(`2.5 %`)==sign(`97.5 %`)),
+        color = "green")
+
+# tabla auxiliar
+df.relacion <- encuesta %>% 
+  group_by(eval.acuerdo.reduc, esperanza.reduc) %>%
+  dplyr::summarize(n= dplyr::n()) %>%
+  mutate(perc= n/sum(n))
+  
+
+# plot de modelo 3
+modelo3 <- ggplot(df.relacion, aes(eval.acuerdo.reduc, perc, 
+                                fill = esperanza.reduc)) +
+  geom_bar(stat = "identity", position = "fill") +
+  theme_bw() +
+  theme(text = element_text(size = 20)) +
+  geom_text(aes(label=scales::percent(perc)),
+            position = position_stack(vjust = .5)) +
+  scale_y_continuous(labels = scales::percent)  +
+  labs(x = "Fue acuerdo para cambio de constitución transparente y justo", 
+       y = "", fill = "Esperanza por el cambio \nde constitución")
 
 
 # ========================  EXPORTANDO TODO A PPT ==================
@@ -338,41 +429,81 @@ ggplot(encuesta, aes(org.pol.std, org.econ.std, shape = as.factor(esperanza.rev)
 
 read_pptx() %>%
   add_slide(layout = "Title and Content", master = "Office Theme") %>%
+  ph_with(value = "Descripción de muestra", location = ph_location_type("title")) %>%
+  
+  add_slide(layout = "Title and Content", master = "Office Theme") %>%
   ph_with_gg(genero_plot, location = ph_location_fullsize()) %>% 
+  
   add_slide(layout = "Title and Content", master = "Office Theme") %>%
   ph_with_gg(region_plot, location = ph_location_fullsize()) %>% 
+  
   add_slide(layout = "Title and Content", master = "Office Theme") %>%
   ph_with_gg(nse_plot, location = ph_location_fullsize()) %>% 
+  
   add_slide(layout = "Title and Content", master = "Office Theme") %>%
   ph_with_gg(edad_plot, location = ph_location_left()) %>% 
   ph_with_gg(escolaridad_plot, location = ph_location_right()) %>% 
+  
   add_slide(layout = "Title and Content", master = "Office Theme") %>%
   ph_with_gg(org_pol_econ_plot, location = ph_location_fullsize()) %>% 
+  
   add_slide(layout = "Title and Content", master = "Office Theme") %>%
   ph_with_gg(pospol_realismo_plot, location = ph_location_fullsize()) %>% 
   
   # desde aquí gráficas sobre preguntas clave
   add_slide(layout = "Title and Content", master = "Office Theme") %>%
+  ph_with(value = "Preguntas clave sobre proceso", location = ph_location_type("title")) %>%
+  
+  add_slide(layout = "Title and Content", master = "Office Theme") %>%
   ph_with_gg(likert_plot, location = ph_location_fullsize()) %>% 
+  
   add_slide(layout = "Title and Content", master = "Office Theme") %>%
   ph_with_gg(apoyo_plot, location = ph_location_fullsize()) %>% 
+  
   add_slide(layout = "Title and Content", master = "Office Theme") %>%
   ph_with_gg(mecanismo_plot, location = ph_location_fullsize()) %>% 
   
   # desde aquí tablas y gráficas de relaciones
+  add_slide(layout = "Title and Content", master = "Office Theme") %>%
+  ph_with(value = "Correlaciones", location = ph_location_type("title")) %>%
+  
   add_slide("Title and Content", "Office Theme") %>%
+  ph_with(value = "Confianza en esperanza por cambio de constitución", 
+          location = ph_location_type("title")) %>%
   ph_with(OR.esperanza.table,
-          location = ph_location_template(left = 2, top = .5, width = 50,
+          location = ph_location_template(left = 2, top = 3, width = 40,
                                           height = 50)) %>%
   
-  print(target = "2020 enero.pptx")
+  add_slide("Title and Content", "Office Theme") %>%
+  ph_with_gg(modelo1, location = ph_location_fullsize()) %>% 
+  
+  add_slide("Title and Content", "Office Theme") %>%
+  ph_with(value = "Confianza en transparencia y justicia de acuerdo para cambio de constitución", 
+          location = ph_location_type("title")) %>%
+  ph_with(OR.acuerdo.table,
+          location = ph_location_template(left = 2, top = 3, width = 40,
+                                          height = 50)) %>%
+  
+  add_slide("Title and Content", "Office Theme") %>%
+  ph_with_gg(modelo2, location = ph_location_fullsize()) %>% 
+  
+  add_slide("Title and Content", "Office Theme") %>%
+  ph_with(value = "Esperanza por cambio de constitución y confianza sobre transparencia de proceso", 
+          location = ph_location_type(type = "title")) %>%
+  ph_with(OR.table,
+          location = ph_location_template(left = 2, top = 3, width = 40,
+                                          height = 50)) %>%
+  
+  add_slide("Title and Content", "Office Theme") %>%
+  ph_with_gg(modelo3, location = ph_location_fullsize()) %>% 
+  
+  print(target = "2020_enero/2020 enero.pptx")
 
 
 
-# esto es para agregar tablas si se desea
-# read_pptx() %>%
-#   add_slide("Title and Content", "Office Theme") %>%
-#   ph_with(flextable(data.frame), 
-#           location = ph_location_template(left = x, top = y)) %>%
-#   print(target = "nombre_archivo.pptx")
+
+
+
+
+
 
