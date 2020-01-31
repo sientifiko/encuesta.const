@@ -264,16 +264,16 @@ ggarrange(ggplot(encuesta, aes(realidad)) +
 # (desconfianza, neutral y confianza) e invertiré relación
 
 encuesta$esperanza.reduc <- case_when(
-  encuesta$esperanza == "Muy de acuerdo" | encuesta$esperanza == "De acuerdo" ~ "Confianza",
+  encuesta$esperanza == "Muy de acuerdo" | encuesta$esperanza == "De acuerdo" ~ "De acuerdo",
   encuesta$esperanza == "Neutral" ~ "Neutral",
-  encuesta$esperanza == "Muy en desacuerdo" | encuesta$esperanza == "En desacuerdo" ~ "Desconfianza"
-) %>% factor(c("Confianza", "Neutral", "Desconfianza"))
+  encuesta$esperanza == "Muy en desacuerdo" | encuesta$esperanza == "En desacuerdo" ~ "Desacuerdo"
+) %>% factor(c("De acuerdo", "Neutral", "Desacuerdo"))
 
 encuesta$eval.acuerdo.reduc <- case_when(
-  encuesta$eval.acuerdo == "Muy de acuerdo" | encuesta$eval.acuerdo == "De acuerdo" ~ "Confianza",
+  encuesta$eval.acuerdo == "Muy de acuerdo" | encuesta$eval.acuerdo == "De acuerdo" ~ "De acuerdo",
   encuesta$eval.acuerdo == "Neutral" ~ "Neutral",
-  encuesta$eval.acuerdo == "Muy en desacuerdo" | encuesta$eval.acuerdo == "En desacuerdo" ~ "Desconfianza"
-) %>% factor(c("Confianza", "Neutral", "Desconfianza"))
+  encuesta$eval.acuerdo == "Muy en desacuerdo" | encuesta$eval.acuerdo == "En desacuerdo" ~ "Desacuerdo"
+) %>% factor(c("De acuerdo", "Neutral", "Desacuerdo"))
   
 
 # las discretizaré para sacar correlaciones
@@ -334,7 +334,7 @@ modelo1 <- ggplot(encuesta, aes(esperanza.reduc,org.econ, colour = pos.politico)
   geom_text(aes(label = "Total desregulación", x = 2, y = 0.5), colour = "blue") + 
   scale_y_continuous(breaks = seq(1,10,1)) +
   theme(text = element_text(size = 20)) +
-  labs(x = "Esperanza por el cambio de constitución", 
+  labs(x = "Hay esperanzas en el cambio de constitución", 
        y = "Organización económica",
        colour = "Posicionamiento político\nderecha = 10\nizquierda = 1")
 
@@ -412,16 +412,18 @@ df.relacion <- encuesta %>%
   
 
 # plot de modelo 3
-modelo3 <- ggplot(df.relacion, aes(eval.acuerdo.reduc, perc, 
-                                fill = esperanza.reduc)) +
-  geom_bar(stat = "identity", position = "fill") +
+modelo3 <- ggplot(encuesta, aes(esperanza.reduc, pos.politico)) +
   theme_bw() +
-  theme(text = element_text(size = 20)) +
-  geom_text(aes(label=scales::percent(perc)),
-            position = position_stack(vjust = .5)) +
-  scale_y_continuous(labels = scales::percent)  +
-  labs(x = "Fue acuerdo para cambio de constitución transparente y justo", 
-       y = "", fill = "Esperanza por el cambio \nde constitución")
+  geom_boxplot()+
+  geom_jitter() +
+  theme(text = element_text(size = 20), 
+        axis.text.x = element_text(angle = 45, vjust = .9, hjust = 1)) +
+  geom_text(aes(label = "Derecha", x = 2, y = 10.5),colour = "blue") +
+  geom_text(aes(label = "Izquierda", x = 2, y = 0.5), colour = "blue") + 
+  facet_wrap(.~ eval.acuerdo.reduc) +
+  labs(x = "Hay esperanza por el cambio de constitución",
+       y = "Posicionamiento político", 
+       title = "Fue acuerdo para cambio de constitución transparente y justo")
 
 
 # ========================  EXPORTANDO TODO A PPT ==================
